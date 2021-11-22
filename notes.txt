@@ -1,0 +1,7 @@
+32-bit logical and physical addresses
+Logical address space = 2^m = 2^32 bytes
+Page size = 2^n = 2^12 = 4 KB 
+
+m = 32
+n = 12
+logical address = { page #, 20 bits | page offset, 12 bits }
