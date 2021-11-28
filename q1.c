@@ -43,10 +43,14 @@ void physicalAddrExtraction(int addr) {
 
 }
 
-void main() {
+int main() {
     int addrs[7] = { 1, 256, 32768, 32769, 128, 65534, 33153 };
+	physicalAddrExtraction(19986);
+	printf("\n");
     for (int i = 0; i < 7; i++) {
         physicalAddrExtraction(addrs[i]);
         printf("\n");
     } 
-}
+	
+	return 0;
+}	
