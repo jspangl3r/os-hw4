@@ -1,3 +1,4 @@
+QUESTION 1:
 32-bit logical and physical addresses
 Logical address space = 2^m = 2^32 bytes
 Page size = 2^n = 2^12 = 4 KB 
@@ -5,3 +6,13 @@ Page size = 2^n = 2^12 = 4 KB
 m = 32
 n = 12
 physical address = { physical page #, 20 bits | page offset, 12 bits }
+
+QUESTION 2:
+16-bit logical addresses
+Logical address space = 2^m = 2^16 bytes
+2^8 entries in page table
+Page size = 2^n = 2^8 = 256 B
+
+m = 16
+n = 8
+logical address = { page #, 8 bits | page offset, 8 bits }
