@@ -11,17 +11,18 @@
 // Test   100111000010010
 // Mask      111111111111 
 // Offset    111000010010
-void physicalAddrExtraction(int addr) {
+void physicalAddrExtraction(unsigned int addr) {
     int m = 20;
     int n = 12;
-    unsigned pageNumMask = 0xFFFFF000;
-    unsigned offsetMask = (1 << n) - 1;
-    int pageNum, startAddr, offset;
+    unsigned offsetMask = 0xFFF;
+    unsigned int pageNum, startAddr, offset;
 
-    // First m digits
-    pageNum = addr & pageNumMask;
-    pageNum = pageNum >> n; 
+    // First m digits for page number
+    pageNum = addr >> n; 
 
+    // Last n digits for offset
+    offset = addr & offsetMask;
+ 
     // Physical address starts at most significant bit
     int msb = 0;
     int addr2 = addr;
@@ -31,20 +32,17 @@ void physicalAddrExtraction(int addr) {
         msb++;
     }
     msb = 1 << msb;
- 
-    // Last n digits
-    offset = addr & offsetMask;
-    
+   
     // Print results
-    printf("Physical address = %d\n", addr);
-    printf("Page number = %d\n", pageNum); 
+    printf("Physical address = %u\n", addr);
+    printf("Page number = %u\n", pageNum); 
     printf("Starting address = 0x%04x\n", msb);
-    printf("Offset = %d\n", offset);   
+    printf("Offset = %u\n", offset);   
 
 }
 
 int main() {
-    int addrs[7] = { 1, 256, 32768, 32769, 128, 65534, 33153 };
+   	unsigned int addrs[7] = { 1, 256, 32768, 32769, 128, 65534, 33153 };
 	physicalAddrExtraction(19986);
 	printf("\n");
     for (int i = 0; i < 7; i++) {
