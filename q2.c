@@ -10,9 +10,10 @@
 int m = 16;
 int n = 8;
 int pageTable[SIZE];
-int memory[SIZE][SIZE];
+char memory[SIZE][SIZE];
+int tlb[TLB_SIZE][2];
+int curTlbSize = 0;
 int freeFrameIdx = 0;
-int tlbIdx = 0;
 
 // Extracts the page number and offset from the passed in logical address.
 // Allocates these values to the input pageNum and offset pointers.
@@ -43,10 +44,10 @@ void pageFault(int pageNum) {
 	}
 	
 	// Read page into buffer.
-	unsigned char buffer[SIZE];
+	char buffer[SIZE];
 	fread(buffer, sizeof(buffer), 1, bsPtr);
 	
-	// Place 256 byte  page into main memory at available memory index.
+	// Place 256 byte page into main memory at available memory index.
 	for (int i = 0; i < SIZE; i++) {
 		memory[freeFrameIdx][i] = buffer[i];
 	}
@@ -78,19 +79,59 @@ int main(int argc, char* argv[]) {
 
 	// Loop over each address.
 	char line[SIZE];
+	int count = 0;
 	while (fgets(line, SIZE, addresses)) {
+		count++;
 		int logicalAddr, physicalAddr, pageNum, frameNum, offset;
+		char val;
+		int tlbHit = 0;
+		
+		// Extract page number and offset from logical address.
 		logicalAddr = atoi(line);
 		logicalAddrExtraction(logicalAddr, &pageNum, &offset);
-		// Attempt to get frame number from page table.
-		if (pageTable[pageNum] == -1) {
-			pageFault(pageNum);
-		}	
-		frameNum = pageTable[pageNum];	
-		// Create physical address and get value. Print results.
-		physicalAddr = (frameNum * SIZE) + offset;	
-		int val = memory[frameNum][offset];	
-		printf("Logical address: %d; Physical address: %d; Value: %d\n", logicalAddr, physicalAddr, val);
+
+		// Search through TLB first for frame number.
+		for (int i = 0; i < curTlbSize; i++) {
+			if (tlb[i][0] == pageNum) {
+				tlbHit = 1;
+				frameNum = tlb[i][1];
+				physicalAddr = (frameNum * SIZE) + offset;
+				val = memory[frameNum][offset];
+				printf("Logical address: %d; Physical address: %d; Signed byte: %d\n", logicalAddr, physicalAddr, val);
+				break;
+			}
+		}			
+
+		// If we had a TLB miss, search through page table.
+		if (tlbHit == 0) {
+			// Attempt to get frame number from page table.
+			if (pageTable[pageNum] == -1) {
+				pageFault(pageNum);
+			}	
+			frameNum = pageTable[pageNum];	
+			// Create physical address and get value. Print results.
+			physicalAddr = (frameNum * SIZE) + offset;	
+			val = memory[frameNum][offset];	
+			printf("Logical address: %d; Physical address: %d; Signed byte: %d\n", logicalAddr, physicalAddr, val);
+			
+			// Update TLB entries using FIFO 
+			if (curTlbSize != TLB_SIZE) {
+				// Add current page and frame numbers to current open position in TLB.
+				tlb[curTlbSize][0] = pageNum;
+				tlb[curTlbSize][1] = frameNum;
+				curTlbSize++;
+			}
+			else {
+				// Move every entry in TLB up, removing the first-in entry.
+				// Save last position for current page and frame numbers.
+				for (int i = 0; i < TLB_SIZE-1; i++) {
+					tlb[i][0] = tlb[i+1][0];
+					tlb[i][1] = tlb[i+1][1];
+				}
+				tlb[curTlbSize-1][0] = pageNum;
+				tlb[curTlbSize-1][1] = frameNum;
+			}
+		}
 	}	
 
 	fclose(addresses);	
