@@ -17,7 +17,7 @@ int freeFrameIdx = 0;
 
 // Extracts the page number and offset from the passed in logical address.
 // Allocates these values to the input pageNum and offset pointers.
-void logicalAddrExtraction(int addr, int* pageNum, int* offset) {
+void logicalAddrExtraction(unsigned int addr, int* pageNum, int* offset) {
 	unsigned sixteenBitMask = 0x0000FFFF;
 	unsigned pageNumMask = 0xFF00;
 	unsigned offsetMask = (1 << n) - 1;
@@ -82,9 +82,10 @@ int main(int argc, char* argv[]) {
 	int count = 0;
 	while (fgets(line, SIZE, addresses)) {
 		count++;
-		int logicalAddr, physicalAddr, pageNum, frameNum, offset;
-		char val;
+		unsigned int logicalAddr, physicalAddr;
+		int pageNum, frameNum, offset;
 		int tlbHit = 0;
+		char val;
 		
 		// Extract page number and offset from logical address.
 		logicalAddr = atoi(line);
