@@ -10,25 +10,9 @@
 int m = 16;
 int n = 8;
 int pageTable[SIZE];
-int physMemory[SIZE][SIZE];
+int memory[SIZE][SIZE];
 int freeFrameIdx = 0;
 int tlbIdx = 0;
-
-// Assumes little endian
-void printBits(size_t const size, void const * const ptr)
-{
-	unsigned char *b = (unsigned char*) ptr;
-	unsigned char byte;
-	int i, j;
-
-	for (i = size-1; i >= 0; i--) {
-		for (j = 7; j >= 0; j--) {
-			byte = (b[i] >> j) & 1;
-			printf("%u", byte);
-		}
-	}
-	puts("");
-}
 
 // Extracts the page number and offset from the passed in logical address.
 // Allocates these values to the input pageNum and offset pointers.
@@ -44,36 +28,27 @@ void logicalAddrExtraction(int addr, int* pageNum, int* offset) {
 
 // Page fault handler.
 void pageFault(int pageNum) {
-	errno = 0;	
 	FILE* bsPtr = fopen("BACKING_STORE.bin", "rb");
 	
 	if (bsPtr == NULL) {
-		printf("Error %d\n", errno);
 		printf("Couldn't open Backing Store!\n");
 		return;
 	}	
 
 	// Attempt to find page in backing store
-	printf("%d\n", pageNum);
-	if (fseek(bsPtr, 256*pageNum, SEEK_SET) != 0) {
+	if (fseek(bsPtr, pageNum*SIZE, SEEK_SET) != 0) {
 		printf("Page not found in Backing Store!\n");
 		fclose(bsPtr);
 		return;
 	}
 	
 	// Read page into buffer.
-	errno = 0;
 	unsigned char buffer[SIZE];
-	if (fread(buffer, sizeof(buffer), 1, bsPtr) != 0) {
-		printf("Error %d\n", errno);
-		printf("Error while reading from Backing Store page!\n");
-		fclose(bsPtr);
-		return;
-	}		
+	fread(buffer, sizeof(buffer), 1, bsPtr);
 	
 	// Place 256 byte  page into main memory at available memory index.
 	for (int i = 0; i < SIZE; i++) {
-		physMemory[freeFrameIdx][i] = buffer[i];
+		memory[freeFrameIdx][i] = buffer[i];
 	}
 	
 	// Update page table and freeFrameIdx.
@@ -102,21 +77,20 @@ int main(int argc, char* argv[]) {
 	memset(pageTable, -1, sizeof(pageTable));
 
 	// Loop over each address.
-	int i = 0;
 	char line[SIZE];
 	while (fgets(line, SIZE, addresses)) {
-		if (i > 0) break;
-		int logicalAddr, physicalAddr, pageNum, offset;
+		int logicalAddr, physicalAddr, pageNum, frameNum, offset;
 		logicalAddr = atoi(line);
 		logicalAddrExtraction(logicalAddr, &pageNum, &offset);
 		// Attempt to get frame number from page table.
 		if (pageTable[pageNum] == -1) {
-			printf("Page fault for page %d!\n", pageNum);
 			pageFault(pageNum);
 		}	
-		int frameNum = pageTable[pageNum];	
-		printf("Acquired frame number %d for page %d\n\n", frameNum, pageNum);
-		i++;
+		frameNum = pageTable[pageNum];	
+		// Create physical address and get value. Print results.
+		physicalAddr = (frameNum * SIZE) + offset;	
+		int val = memory[frameNum][offset];	
+		printf("Logical address: %d; Physical address: %d; Value: %d\n", logicalAddr, physicalAddr, val);
 	}	
 
 	fclose(addresses);	
