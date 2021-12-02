@@ -30,7 +30,7 @@ void logicalAddrExtraction(unsigned int addr, int* pageNum, int* offset) {
 // Page fault handler.
 void pageFault(int pageNum) {
 	FILE* bsPtr = fopen("BACKING_STORE.bin", "rb");
-	
+
 	if (bsPtr == NULL) {
 		printf("Couldn't open Backing Store!\n");
 		return;
@@ -42,16 +42,16 @@ void pageFault(int pageNum) {
 		fclose(bsPtr);
 		return;
 	}
-	
+
 	// Read page into buffer.
 	char buffer[SIZE];
 	fread(buffer, sizeof(buffer), 1, bsPtr);
-	
+
 	// Place 256 byte page into main memory at available memory index.
 	for (int i = 0; i < SIZE; i++) {
 		memory[freeFrameIdx][i] = buffer[i];
 	}
-	
+
 	// Update page table and freeFrameIdx.
 	pageTable[pageNum] = freeFrameIdx;
 	freeFrameIdx++;
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
 		int pageNum, frameNum, offset;
 		int tlbHit = 0;
 		char val;
-		
+
 		// Extract page number and offset from logical address.
 		logicalAddr = atoi(line);
 		logicalAddrExtraction(logicalAddr, &pageNum, &offset);
@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
 			physicalAddr = (frameNum * SIZE) + offset;	
 			val = memory[frameNum][offset];	
 			printf("Logical address: %d; Physical address: %d; Signed byte: %d\n", logicalAddr, physicalAddr, val);
-			
+
 			// Update TLB entries using FIFO 
 			if (curTlbSize != TLB_SIZE) {
 				// Add current page and frame numbers to current open position in TLB.
